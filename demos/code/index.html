@@ -2933,5 +2933,31 @@
 
         toggleSwitch.addEventListener('change', switchTheme, false);
     </script>
+    
+    <script>
+        // Modified save functions to change filenames
+        function saveCode() {
+            // Get Arduino code
+            var content = document.getElementById('content_arduino').textContent;
+            
+            // Create blob with Arduino code
+            var blob = new Blob([content], {type: 'text/plain'});
+            
+            // Save file with new name "arduinoman"
+            saveAs(blob, 'arduinoman.ino');
+        }
+        
+        function save() {
+            // Get XML content
+            var xml = Blockly.Xml.workspaceToDom(Code.workspace);
+            var content = Blockly.Xml.domToText(xml);
+            
+            // Create blob with XML content
+            var blob = new Blob([content], {type: 'text/xml'});
+            
+            // Save file with new name "arduinoman"
+            saveAs(blob, 'arduinoman.xml');
+        }
+    </script>
 </body>
 </html>
