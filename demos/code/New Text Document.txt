@@ -1,0 +1,1 @@
+make "buy" button undisplay not visible to the user and make it state unable
