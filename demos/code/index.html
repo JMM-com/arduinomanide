@@ -166,8 +166,8 @@
             :root {
                 --bg-color: #ffffff;
                 --text-color: #333333;
-                --header-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                --header-border: #dee2e6;
+                --header-bg: rgba(255, 255, 255, 0.85);
+                --header-border: rgba(222, 226, 230, 0.7);
                 --tab-bg: #f8f9fa;
                 --tab-color: #495057;
                 --tab-active-bg: #ffffff;
@@ -178,13 +178,14 @@
                 --modal-bg: #ffffff;
                 --modal-header-bg: #f8f9fa;
                 --social-icon-color: #555;
+                --header-blur: blur(10px);
             }
 
             .dark-mode {
                 --bg-color: #1a1a1a;
                 --text-color: #e0e0e0;
-                --header-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-                --header-border: #4a5568;
+                --header-bg: rgba(45, 55, 72, 0.85);
+                --header-border: rgba(74, 85, 104, 0.7);
                 --tab-bg: #2d3748;
                 --tab-color: #e2e8f0;
                 --tab-active-bg: #4a5568;
@@ -201,6 +202,9 @@
                 background-color: var(--bg-color);
                 color: var(--text-color);
                 transition: background-color 0.3s, color 0.3s;
+                margin: 0;
+                padding: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
 
             .header-title {
@@ -220,9 +224,13 @@
             
             .modern-header {
                 background: var(--header-bg);
+                backdrop-filter: var(--header-blur);
+                -webkit-backdrop-filter: var(--header-blur);
                 border-bottom: 1px solid var(--header-border);
                 padding: 0;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                position: relative;
+                z-index: 1000;
             }
             
             .header-container {
@@ -424,6 +432,18 @@
 
             .blocklyTreeRow:hover {
                 background-color: var(--button-hover-bg) !important;
+            }
+
+            /* Main layout table */
+            table {
+                width: 100%;
+                height: 100%;
+                border-collapse: collapse;
+            }
+            
+            /* Translucent effect for content area */
+            #content_area {
+                position: relative;
             }
         </style>
     </head>
