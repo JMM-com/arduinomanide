@@ -34,9 +34,9 @@ var rtl;
  * Lookup for names of supported languages.  Keys should be in ISO 639 format.
  */
 Code.LANGUAGE_NAME = {
- // 'ar': 'العربية',
+  'ar': 'العربية',
   'en': 'English',
- // 'es':'Español'
+  // 'es':'Español'
   //'fr': 'Français'
 };
 
@@ -377,7 +377,7 @@ Code.yes = function() {
     var myb = Code.workspace.getAllBlocks();
     
     document.getElementById('capacity').innerHTML = Code.workspace.getAllBlocks();
-	document.getElementById('test').innerHTML = ko.length - 1;
+    document.getElementById('test').innerHTML = ko.length - 1;
     
 /*   //
     var toolbox = '<xml id="toolbox" >';
@@ -421,6 +421,8 @@ Code.init = function() {
   window.addEventListener('resize', onresize, false);
 
   var toolbox = document.getElementById('toolbox');
+  
+  // ALWAYS use LTR layout regardless of language to maintain exact same layout
   Code.workspace = Blockly.inject('content_blocks',
       {grid:
           {spacing: 25,
@@ -428,12 +430,19 @@ Code.init = function() {
            colour: '#ccc',
            snap: true},
        media: '../../media/',
-       rtl: rtl,
+       rtl: false, // Force LTR for all languages
        toolbox: toolbox,
        zoom:
            {controls: true,
-            wheel: true}
+            wheel: true},
+       // Additional options to help with text rendering
+       move: {
+         scrollbars: true,
+         drag: true,
+         wheel: true
+       }
       });
+
 //ADEL
 Code.workspace.addChangeListener(Code.yes);
 
@@ -499,10 +508,12 @@ mystartfile += '</xml>';
  * Initialize the page language.
  */
 Code.initLanguage = function() {
-  // Set the HTML's language and direction.
-  var rtl = Code.isRtl();
-  document.dir = rtl ? 'rtl' : 'ltr';
+  // ALWAYS use LTR direction for the entire document to maintain layout
+  document.dir = 'ltr';
   document.head.parentElement.setAttribute('lang', Code.LANG);
+  
+  // Add language attribute to body for CSS targeting
+  document.body.setAttribute('lang', Code.LANG);
 
   // Sort languages alphabetically.
   var languages = [];
@@ -548,11 +559,29 @@ Code.initLanguage = function() {
   document.getElementById('fakeload').title = MSG['loadXMLTooltip']; 
   document.getElementById('copyButton').title = MSG['copycodeTooltip'];
 
+  // Update button texts for Arabic
+  if (Code.LANG === 'ar') {
+    document.getElementById('tab_blocks').textContent = MSG['blocks'];
+    document.getElementById('tab_arduino').textContent = 'أردوينو';
+    document.getElementById('copyButton').innerHTML = '<img src="../../media/iconecopy.png" class="icon21"> نسخ الكود';
+    document.getElementById('trashButton').innerHTML = '<img src="../../media/trash.png" class="icon21"> حذف الكل';
+    document.getElementById('savexmlButton').innerHTML = '<img src="../../media/saveXML.png" class="icon21"> حفظ الكتل';
+    document.getElementById('fakeload').innerHTML = '<img src="../../media/loadXML.png" class="icon21"> تحميل الكتل';
+    document.getElementById('runButton').innerHTML = '<img src="../../media/arduino.png" class="icon21"> حفظ كود الأردوينو';
+    document.getElementById('myBtn').innerHTML = '<img src="../../media/loadXML.png" class="run icon21"> الأمثلة';
+    
+    // Update modal content for Arabic
+    Code.updateModalContent();
+  }
+
   var categories = ['catInOut','catSerialAll','catSerial','catSerial1','catSoftSerial','catBTAll','catBTSerial1','catBTSoftSerial','catMotors','catMotorMRT','catServo','catSimpleSensorsALL','catSimpleSensors','catSimpleSensors2','catSimpleSensors3','catSimpleActuators','catSerialLCD_I2C','catDisplay','catVision','catADXL345','catHMC5883','catDigital','catAnalog','catCCS811', 
                     'catString','catDivers','catInterruptExt','catStorage','catMAX7219_7D','catMAX7219_LM','catEEprom','catStepper','catStepper28BYJ','catRTCDS3231','catRTCDS1302','catLedStrip','catTM1637','catTM1638','catLogic','catLoops','catTime','catGenericTime', 'catMath', 'catText','catRotaryEncoder','catGPS','catAllVar','catVariables', 'catFunctions','catRemoteIR','catKeypad',
-					'catOtherSensors','catRFID','catRadioTEA5767','catCommunication','catDFPlayerMP3','catYK5300MP3','catmicroSD','catAPDS9960','catWIFISerial1','catWIFISoftSerial','catOtherActuators','catWIFI','catIOT','catMQTTWifi','catRF24L01','catRF','catTCS3200','catTCS34725','catCamera','catds18b20','catST7735','catNEXTION','catServoRot','catPixy2','catMuVision','catOtto','catArray'];
+                    'catOtherSensors','catRFID','catRadioTEA5767','catCommunication','catDFPlayerMP3','catYK5300MP3','catmicroSD','catAPDS9960','catWIFISerial1','catWIFISoftSerial','catOtherActuators','catWIFI','catIOT','catMQTTWifi','catRF24L01','catRF','catTCS3200','catTCS34725','catCamera','catds18b20','catST7735','catNEXTION','catServoRot','catPixy2','catMuVision','catOtto','catArray'];
   for (var i = 0, cat; cat = categories[i]; i++) {
-    document.getElementById(cat).setAttribute('name', MSG[cat]);
+    var element = document.getElementById(cat);
+    if (element) {
+      element.setAttribute('name', MSG[cat]);
+    }
   }
   var textVars = document.getElementsByClassName('textVar');
   for (var i = 0, textVar; textVar = textVars[i]; i++) {
@@ -561,6 +590,47 @@ Code.initLanguage = function() {
   var listVars = document.getElementsByClassName('listVar');
   for (var i = 0, listVar; listVar = listVars[i]; i++) {
     listVar.textContent = MSG['listVariable'];
+  }
+};
+
+/**
+ * Update modal content for Arabic language
+ */
+Code.updateModalContent = function() {
+  if (Code.LANG === 'ar') {
+    // Update modal title
+    var modalTitle = document.querySelector('.modal-header h2');
+    if (modalTitle) {
+      modalTitle.textContent = 'اختر مثالاً';
+    }
+    
+    // Update close button text
+    var closeButton = document.querySelector('.close');
+    if (closeButton) {
+      closeButton.textContent = '×';
+    }
+    
+    // Update example descriptions
+    var examples = {
+      'model0': 'وميض LED',
+      'model1': 'الجمباز', 
+      'model2': 'القطار',
+      'model3': 'البطة',
+      'model4': 'الدولاب الدوار',
+      'model5': 'سيارة الإطفاء',
+      'model6': 'المتزلج أو الملاكم',
+      'model7': 'الدب أو روبوت كرة القدم أو الهليكوبتر',
+      'model8': 'الرماية',
+      'model9': 'البيانو',
+      'model10': 'السيارة بالمفتاح'
+    };
+    
+    for (var key in examples) {
+      var element = document.getElementById(key);
+      if (element) {
+        element.textContent = examples[key];
+      }
+    }
   }
 };
 
@@ -661,4 +731,3 @@ document.write('<script src="msg/' + Code.LANG + '.js"></script>\n');
 document.write('<script src="../../msg/js/' + Code.LANG + '.js"></script>\n');
 
 window.addEventListener('load', Code.init);
-

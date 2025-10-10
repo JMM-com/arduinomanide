@@ -34,8 +34,6 @@ goog.require('Blockly.Blocks');
  */
 Blockly.Blocks.colour.HUE = 230;
 
-
-///
 Blockly.Blocks['inout_highlow'] = {
   helpUrl: 'http://arduino.cc/en/Reference/Constants',
   init: function() {
@@ -46,7 +44,6 @@ Blockly.Blocks['inout_highlow'] = {
     this.setTooltip('');
   }
 }; 
-
 
 Blockly.Blocks['inout_digital_read'] = {
   helpUrl: 'http://arduino.cc/en/Reference/DigitalRead',
@@ -135,4 +132,3 @@ Blockly.Blocks['advanced_pulsein'] = {
     this.setTooltip('Reads a pulse (either HIGH or LOW) on a pin. For example, if value is HIGH, pulseIn() waits for the pin to go HIGH, starts timing, then waits for the pin to go LOW and stops timing. Returns the length of the pulse in microseconds. Gives up and returns 0 if no pulse starts within a specified time out.');
   }
 };
-

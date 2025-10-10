@@ -102,7 +102,7 @@ BlocklyApps.initReadonly = function() {
   Blockly.inject(document.getElementById('blockly'),
       {path: '../../',
        readOnly: true,
-       rtl: BlocklyApps.isRtl(),
+       rtl: false, // Force LTR for all languages
        scrollbars: false});
 
   // Add the blocks.

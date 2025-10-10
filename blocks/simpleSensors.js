@@ -29,8 +29,6 @@
  *
  ****************************************************************/
  
- 
- 
 'use strict';
 
 goog.provide('Blockly.Blocks.simpleSensors');
@@ -72,8 +70,6 @@ Blockly.Blocks['internal_button_sensor'] = {
     this.setTooltip('');
   }
 };
-
-
 
 Blockly.Blocks['button_touch_sensor'] = {
   helpUrl: '',
@@ -553,7 +549,6 @@ Blockly.Blocks['Moisture_sensor'] = {
   }
 };
 
-
 Blockly.Blocks['Joystick_axis_sensor'] = {
   helpUrl: '',
   init: function() {
@@ -586,8 +581,3 @@ Blockly.Blocks['joystick_button_sensor'] = {
     this.setTooltip('');
   }
 };
-
-
-
-
-
