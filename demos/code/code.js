@@ -157,8 +157,10 @@ Code.bindClick = function(el, func) {
   if (typeof el == 'string') {
     el = document.getElementById(el);
   }
-  el.addEventListener('click', func, true);
-  el.addEventListener('touchend', func, true);
+  if (el) {
+    el.addEventListener('click', func, true);
+    el.addEventListener('touchend', func, true);
+  }
 };
 
 /**
@@ -246,8 +248,15 @@ Code.tabClick = function(clickedName) {
   // Deselect all tabs and hide all panes.
   for (var i = 0; i < Code.TABS_.length; i++) {
     var name = Code.TABS_[i];
-    document.getElementById('tab_' + name).className = 'taboff';
-    document.getElementById('content_' + name).style.visibility = 'hidden';
+    var tabElement = document.getElementById('tab_' + name);
+    var contentElement = document.getElementById('content_' + name);
+    
+    if (tabElement) {
+      tabElement.className = 'taboff';
+    }
+    if (contentElement) {
+      contentElement.style.visibility = 'hidden';
+    }
   }
   
    Code.selected = clickedName;
@@ -258,13 +267,13 @@ var warningText;
  if (Code.selected == 'arduino') {
     // Check for bad block configurations that make it unlikely that
     // the resulting code is correct.
-    var badBlock = Blockly.Arduino.getUnconnectedBlock();
+    var badBlock = Blockly.Arduino.getUnconnectedBlock ? Blockly.Arduino.getUnconnectedBlock() : null;
     //alert(badBlock);
     if (badBlock) {
       warningText = MSG['warningBadBlock'];
       
     } else {
-      badBlock = Blockly.Arduino.getBlockWithWarning();
+      badBlock = Blockly.Arduino.getBlockWithWarning ? Blockly.Arduino.getBlockWithWarning() : null;
       if (badBlock) {
        warningText = MSG['warningPleaseFix'];
       }
@@ -287,15 +296,27 @@ var warningText;
         top: '5em'
       };
       
-      document.getElementById('badBlockMsg').innerHTML = warningText;
-      BlocklyApps.showDialog(document.getElementById('badBlockDiv'), null,
-                             false, true, style, BlocklyApps.stopDialogKeyDown);
-      BlocklyApps.startDialogKeyDown();
+      var badBlockMsg = document.getElementById('badBlockMsg');
+      if (badBlockMsg) {
+        badBlockMsg.innerHTML = warningText;
+      }
+      
+      if (BlocklyApps && BlocklyApps.showDialog) {
+        BlocklyApps.showDialog(document.getElementById('badBlockDiv'), null,
+                               false, true, style, BlocklyApps.stopDialogKeyDown);
+        BlocklyApps.startDialogKeyDown();
+      }
      
       var blink = function() {
-        badBlock.select();
-        if (BlocklyApps.isDialogVisible_) {
-          window.setTimeout(function() {badBlock.unselect();}, 150);
+        if (badBlock && badBlock.select) {
+          badBlock.select();
+        }
+        if (BlocklyApps && BlocklyApps.isDialogVisible_) {
+          window.setTimeout(function() {
+            if (badBlock && badBlock.unselect) {
+              badBlock.unselect();
+            }
+          }, 150);
           window.setTimeout(blink, 300);
         }
       };
@@ -309,12 +330,18 @@ var warningText;
 
   
     // Select the active tab.
- 
- 
-  document.getElementById('tab_' + clickedName).className = 'tabon';
+  var activeTab = document.getElementById('tab_' + clickedName);
+  var activeContent = document.getElementById('content_' + clickedName);
+  
+  if (activeTab) {
+    activeTab.className = 'tabon';
+  }
+  
   // Show the selected pane.
-  document.getElementById('content_' + clickedName).style.visibility =
-      'visible';
+  if (activeContent) {
+    activeContent.style.visibility = 'visible';
+  }
+  
   Code.renderContent();
   if (clickedName == 'blocks') {
     Code.workspace.setVisible(true);
@@ -327,13 +354,17 @@ var warningText;
  */
 Code.renderContent = function() {
   var content = document.getElementById('content_' + Code.selected);
+  if (!content) return;
+  
   // Initialize the pane.
   if (content.id == 'content_xml') {
     var xmlTextarea = document.getElementById('content_xml');
-    var xmlDom = Blockly.Xml.workspaceToDom(Code.workspace);
-    var xmlText = Blockly.Xml.domToPrettyText(xmlDom);
-    xmlTextarea.value = xmlText;
-    xmlTextarea.focus();
+    if (xmlTextarea) {
+      var xmlDom = Blockly.Xml.workspaceToDom(Code.workspace);
+      var xmlText = Blockly.Xml.domToPrettyText(xmlDom);
+      xmlTextarea.value = xmlText;
+      xmlTextarea.focus();
+    }
   } else if (content.id == 'content_javascript') {
     var code = Blockly.JavaScript.workspaceToCode(Code.workspace);
     content.textContent = code;
@@ -343,7 +374,7 @@ Code.renderContent = function() {
       content.innerHTML = code;
     }
   } else if (content.id == 'content_python') {
-    code = Blockly.Python.workspaceToCode(Code.workspace);
+    var code = Blockly.Python.workspaceToCode(Code.workspace);
     content.textContent = code;
     if (typeof prettyPrintOne == 'function') {
       code = content.innerHTML;
@@ -351,7 +382,7 @@ Code.renderContent = function() {
       content.innerHTML = code;
     }
   } else if (content.id == 'content_php') {
-    code = Blockly.PHP.workspaceToCode(Code.workspace);
+    var code = Blockly.PHP.workspaceToCode(Code.workspace);
     content.textContent = code;
     if (typeof prettyPrintOne == 'function') {
       code = content.innerHTML;
@@ -359,12 +390,17 @@ Code.renderContent = function() {
       content.innerHTML = code;
     }
   } else if (content.id == 'content_arduino') {
-    code = Blockly.Arduino.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.innerHTML;
-      code = prettyPrintOne(code, 'arduino');
-      content.innerHTML = code;
+    try {
+      var code = Blockly.Arduino.workspaceToCode(Code.workspace);
+      content.textContent = code;
+      if (typeof prettyPrintOne == 'function') {
+        code = content.innerHTML;
+        code = prettyPrintOne(code, 'arduino');
+        content.innerHTML = code;
+      }
+    } catch (e) {
+      console.error("Error generating Arduino code:", e);
+      content.textContent = "// Error generating code: " + e.message;
     }
   }
 };
@@ -373,11 +409,19 @@ Code.renderContent = function() {
  * Initialize Blockly.  Called on page load.
  */
 Code.yes = function() {
-    var ko = Code.workspace.getAllBlocksADEL();
-    var myb = Code.workspace.getAllBlocks();
+    // Safely check if elements exist before setting innerHTML
+    var capacityElement = document.getElementById('capacity');
+    var testElement = document.getElementById('test');
     
-    document.getElementById('capacity').innerHTML = Code.workspace.getAllBlocks();
-    document.getElementById('test').innerHTML = ko.length - 1;
+    if (capacityElement) {
+        var myb = Code.workspace.getAllBlocks();
+        capacityElement.innerHTML = myb.length;
+    }
+    
+    if (testElement) {
+        var ko = Code.workspace.getAllBlocksADEL ? Code.workspace.getAllBlocksADEL() : [];
+        testElement.innerHTML = ko.length - 1;
+    }
     
 /*   //
     var toolbox = '<xml id="toolbox" >';
@@ -397,30 +441,36 @@ Code.init = function() {
   var RTL=Code.isRtl();
   rtl = Code.isRtl();
   var container = document.getElementById('content_area');
+  if (!container) return;
+  
   var onresize = function(e) {
     var bBox = Code.getBBox_(container);
     for (var i = 0; i < Code.TABS_.length; i++) {
       var el = document.getElementById('content_' + Code.TABS_[i]);
-      el.style.top = bBox.y + 'px';
-      el.style.left = bBox.x + 'px';
-      // Height and width need to be set, read back, then set again to
-      // compensate for scrollbars.
-      el.style.height = bBox.height + 'px';
-      el.style.height = (2 * bBox.height - el.offsetHeight) + 'px';
-      el.style.width = bBox.width + 'px';
-      el.style.width = (2 * bBox.width - el.offsetWidth) + 'px';
+      if (el) {
+        el.style.top = bBox.y + 'px';
+        el.style.left = bBox.x + 'px';
+        // Height and width need to be set, read back, then set again to
+        // compensate for scrollbars.
+        el.style.height = bBox.height + 'px';
+        el.style.height = (2 * bBox.height - el.offsetHeight) + 'px';
+        el.style.width = bBox.width + 'px';
+        el.style.width = (2 * bBox.width - el.offsetWidth) + 'px';
+      }
     }
     // Make the 'Blocks' tab line up with the toolbox.
-    if (Code.workspace && Code.workspace.toolbox_.width) {
-      document.getElementById('tab_blocks').style.minWidth =
-          (Code.workspace.toolbox_.width -38) + 'px';
-          // Account for the 19 pixel margin and on each side.
+    if (Code.workspace && Code.workspace.toolbox_ && Code.workspace.toolbox_.width) {
+      var tabBlocks = document.getElementById('tab_blocks');
+      if (tabBlocks) {
+        tabBlocks.style.minWidth = (Code.workspace.toolbox_.width - 38) + 'px';
+      }
     }
   };
   onresize();
   window.addEventListener('resize', onresize, false);
 
   var toolbox = document.getElementById('toolbox');
+  if (!toolbox) return;
   
   // ALWAYS use LTR layout regardless of language to maintain exact same layout
   Code.workspace = Blockly.inject('content_blocks',
@@ -444,31 +494,41 @@ Code.init = function() {
       });
 
 //ADEL
-Code.workspace.addChangeListener(Code.yes);
+if (Code.workspace) {
+  Code.workspace.addChangeListener(Code.yes);
+}
 
 // Copier coller
 function onchange(event) {
-      //var content2 = document.getElementById("fool");
-      //var code;
-      //code = Blockly.Arduino.workspaceToCode(Code.workspace);
-      //code = prettyPrintOne(code, 'arduino');
-      //content2.textContent = code;
-           //alert("changement");
-            //code = Blockly.Arduino.workspaceToCode(Code.workspace);
-            //content.textContent = code;
-          document.getElementById('fool').value = Blockly.Arduino.workspaceToCode(Code.workspace);
-            //document.getElementById('foo').innerHTML = Code.workspace.Numberallblock();
-        }
-Code.workspace.addChangeListener(onchange);
+  try {
+    var foolElement = document.getElementById('fool');
+    if (foolElement) {
+      var code;
+      try {
+        code = Blockly.Arduino.workspaceToCode(Code.workspace);
+        foolElement.value = code;
+      } catch (e) {
+        console.error("Error generating Arduino code in onchange:", e);
+        foolElement.value = "// Error generating code: " + e.message;
+      }
+    }
+  } catch (error) {
+    console.error("Error in onchange function:", error);
+  }
+}
 
+if (Code.workspace) {
+  Code.workspace.addChangeListener(onchange);
+}
 
   // Add to reserved word list: Local variables in execution environment (runJS)
   // and the infinite loop detection function.
   Blockly.JavaScript.addReservedWords('code,timeouts,checkTimeout');
-var mystartfile;
-mystartfile= '<xml xmlns="http://www.w3.org/1999/xhtml">';
-mystartfile +=  '<block type="arduino_setup" x="0" y="0"></block>';
-mystartfile += '</xml>';
+  
+  var mystartfile;
+  mystartfile= '<xml xmlns="http://www.w3.org/1999/xhtml">';
+  mystartfile +=  '<block type="arduino_setup" x="0" y="0"></block>';
+  mystartfile += '</xml>';
   Code.loadBlocks(mystartfile);
 
   if ('BlocklyStorage' in window) {
@@ -529,46 +589,113 @@ Code.initLanguage = function() {
   languages.sort(comp);
   // Populate the language selection menu.
   var languageMenu = document.getElementById('languageMenu');
-  languageMenu.options.length = 0;
-  for (var i = 0; i < languages.length; i++) {
-    var tuple = languages[i];
-    var lang = tuple[tuple.length - 1];
-    var option = new Option(tuple[0], lang);
-    if (lang == Code.LANG) {
-      option.selected = true;
+  if (languageMenu) {
+    languageMenu.options.length = 0;
+    for (var i = 0; i < languages.length; i++) {
+      var tuple = languages[i];
+      var lang = tuple[tuple.length - 1];
+      var option = new Option(tuple[0], lang);
+      if (lang == Code.LANG) {
+        option.selected = true;
+      }
+      languageMenu.options.add(option);
     }
-    languageMenu.options.add(option);
+    languageMenu.addEventListener('change', Code.changeLanguage, true);
   }
-  languageMenu.addEventListener('change', Code.changeLanguage, true);
 
   // Inject language strings.
   document.title += ' ' + MSG['title'];
   //document.getElementById('title').textContent = MSG['title'];
-  document.getElementById('tab_blocks').textContent = MSG['blocks'];
+  
+  var tabBlocks = document.getElementById('tab_blocks');
+  if (tabBlocks) {
+    tabBlocks.textContent = MSG['blocks'];
+  }
 
-  document.getElementById('linkButton').title = MSG['linkTooltip'];
-  document.getElementById('runButton').title = MSG['runTooltip'];
-  document.getElementById('trashButton').title = MSG['trashTooltip'];
-  document.getElementById('uploadButton').title = MSG['uploadTooltip'];
-  document.getElementById('myBtn').title = MSG['myBtnTooltip'];
-  document.getElementById('buyBtn').title = MSG['BuyTooltip'];
-  document.getElementById('boardBtn').title = MSG['BoardTooltip'];
+  var linkButton = document.getElementById('linkButton');
+  if (linkButton) {
+    linkButton.title = MSG['linkTooltip'];
+  }
   
+  var runButton = document.getElementById('runButton');
+  if (runButton) {
+    runButton.title = MSG['runTooltip'];
+  }
   
-  document.getElementById('savexmlButton').title = MSG['saveXMLTooltip']; 
-  document.getElementById('fakeload').title = MSG['loadXMLTooltip']; 
-  document.getElementById('copyButton').title = MSG['copycodeTooltip'];
+  var trashButton = document.getElementById('trashButton');
+  if (trashButton) {
+    trashButton.title = MSG['trashTooltip'];
+  }
+  
+  var uploadButton = document.getElementById('uploadButton');
+  if (uploadButton) {
+    uploadButton.title = MSG['uploadTooltip'];
+  }
+  
+  var myBtn = document.getElementById('myBtn');
+  if (myBtn) {
+    myBtn.title = MSG['myBtnTooltip'];
+  }
+  
+  var buyBtn = document.getElementById('buyBtn');
+  if (buyBtn) {
+    buyBtn.title = MSG['BuyTooltip'];
+  }
+  
+  var boardBtn = document.getElementById('boardBtn');
+  if (boardBtn) {
+    boardBtn.title = MSG['BoardTooltip'];
+  }
+  
+  var savexmlButton = document.getElementById('savexmlButton');
+  if (savexmlButton) {
+    savexmlButton.title = MSG['saveXMLTooltip']; 
+  }
+  
+  var fakeload = document.getElementById('fakeload');
+  if (fakeload) {
+    fakeload.title = MSG['loadXMLTooltip']; 
+  }
+  
+  var copyButton = document.getElementById('copyButton');
+  if (copyButton) {
+    copyButton.title = MSG['copycodeTooltip'];
+  }
 
   // Update button texts for Arabic
   if (Code.LANG === 'ar') {
-    document.getElementById('tab_blocks').textContent = MSG['blocks'];
-    document.getElementById('tab_arduino').textContent = 'أردوينو';
-    document.getElementById('copyButton').innerHTML = '<img src="../../media/iconecopy.png" class="icon21"> نسخ الكود';
-    document.getElementById('trashButton').innerHTML = '<img src="../../media/trash.png" class="icon21"> حذف الكل';
-    document.getElementById('savexmlButton').innerHTML = '<img src="../../media/saveXML.png" class="icon21"> حفظ الكتل';
-    document.getElementById('fakeload').innerHTML = '<img src="../../media/loadXML.png" class="icon21"> تحميل الكتل';
-    document.getElementById('runButton').innerHTML = '<img src="../../media/arduino.png" class="icon21"> حفظ كود الأردوينو';
-    document.getElementById('myBtn').innerHTML = '<img src="../../media/loadXML.png" class="run icon21"> الأمثلة';
+    if (tabBlocks) {
+      tabBlocks.textContent = MSG['blocks'];
+    }
+    
+    var tabArduino = document.getElementById('tab_arduino');
+    if (tabArduino) {
+      tabArduino.textContent = 'أردوينو';
+    }
+    
+    if (copyButton) {
+      copyButton.innerHTML = '<img src="../../media/iconecopy.png" class="icon21"> نسخ الكود';
+    }
+    
+    if (trashButton) {
+      trashButton.innerHTML = '<img src="../../media/trash.png" class="icon21"> حذف الكل';
+    }
+    
+    if (savexmlButton) {
+      savexmlButton.innerHTML = '<img src="../../media/saveXML.png" class="icon21"> حفظ الكتل';
+    }
+    
+    if (fakeload) {
+      fakeload.innerHTML = '<img src="../../media/loadXML.png" class="icon21"> تحميل الكتل';
+    }
+    
+    if (runButton) {
+      runButton.innerHTML = '<img src="../../media/arduino.png" class="icon21"> حفظ كود الأردوينو';
+    }
+    
+    if (myBtn) {
+      myBtn.innerHTML = '<img src="../../media/loadXML.png" class="run icon21"> الأمثلة';
+    }
     
     // Update modal content for Arabic
     Code.updateModalContent();
@@ -669,52 +796,64 @@ Code.discard = function() {
 
 //ADEL FOR WARNING
 Code.stopDialogKeyDown = function() {
-  document.body.removeEventListener('keydown',
-      BlocklyApps.dialogKeyDown_, true);
+  if (document.body && BlocklyApps && BlocklyApps.dialogKeyDown_) {
+    document.body.removeEventListener('keydown',
+        BlocklyApps.dialogKeyDown_, true);
+  }
 };
 
 Code.showDialog = function(content, origin, animate, modal, style,
                                   disposeFunc) {
-  if (Code.isDialogVisible_) {
+  if (BlocklyApps && BlocklyApps.isDialogVisible_) {
     BlocklyApps.hideDialog(false);
   }
-  BlocklyApps.isDialogVisible_ = true;
-  BlocklyApps.dialogOrigin_ = origin;
-  BlocklyApps.dialogDispose_ = disposeFunc;
+  
+  if (BlocklyApps) {
+    BlocklyApps.isDialogVisible_ = true;
+    BlocklyApps.dialogOrigin_ = origin;
+    BlocklyApps.dialogDispose_ = disposeFunc;
+  }
+  
   var dialog = document.getElementById('dialog');
   var shadow = document.getElementById('dialogShadow');
   var border = document.getElementById('dialogBorder');
   
-
+  if (!dialog) return;
 
   // Copy all the specified styles to the dialog.
   for (var name in style) {
     dialog.style[name] = style[name];
   }
-  if (modal) {
+  if (modal && shadow) {
     shadow.style.visibility = 'visible';
     shadow.style.opacity = 0.3;
     var header = document.createElement('div');
     header.id = 'dialogHeader';
     dialog.appendChild(header);
-    BlocklyApps.dialogMouseDownWrapper_ =
-        Blockly.bindEvent_(header, 'mousedown', null,
-                           BlocklyApps.dialogMouseDown_);
+    if (BlocklyApps) {
+      BlocklyApps.dialogMouseDownWrapper_ =
+          Blockly.bindEvent_(header, 'mousedown', null,
+                             BlocklyApps.dialogMouseDown_);
+    }
   }
   dialog.appendChild(content);
   content.className = content.className.replace('dialogHiddenContent', '');
 
   function endResult() {
     // Check that the dialog wasn't closed during opening.
-    if (BlocklyApps.isDialogVisible_) {
+    if (BlocklyApps && BlocklyApps.isDialogVisible_ && dialog) {
       dialog.style.visibility = 'visible';
       dialog.style.zIndex = 1;
-      border.style.visibility = 'hidden';
+      if (border) {
+        border.style.visibility = 'hidden';
+      }
     }
   }
   if (animate && origin) {
-    BlocklyApps.matchBorder_(origin, false, 0.2);
-    BlocklyApps.matchBorder_(dialog, true, 0.8);
+    if (BlocklyApps && BlocklyApps.matchBorder_) {
+      BlocklyApps.matchBorder_(origin, false, 0.2);
+      BlocklyApps.matchBorder_(dialog, true, 0.8);
+    }
     // In 175ms show the dialog and hide the animated border.
     window.setTimeout(endResult, 175);
   } else {
